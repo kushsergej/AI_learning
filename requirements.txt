@@ -1,10 +1,9 @@
-openai>=2.6.0
 ipykernel
+openai
 dotenv
 numpy
 matplotlib
+hf_xet
 datasets
 transformers
-torch
-evaluate
-hf_xet
+peft
