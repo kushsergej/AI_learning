@@ -7,3 +7,4 @@ hf_xet
 datasets
 transformers
 peft
+torch
