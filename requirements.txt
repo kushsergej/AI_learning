@@ -1,6 +1,5 @@
 ipykernel
 openai
-dotenv
 numpy
 matplotlib
 hf_xet
@@ -8,3 +7,4 @@ datasets
 transformers
 peft
 torch
+huggingface_hub
