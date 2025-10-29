@@ -1,10 +1,7 @@
 ipykernel
-openai
-numpy
-matplotlib
-hf_xet
-datasets
-transformers
-peft
+ipywidgets
 torch
 huggingface_hub
+transformers
+numpy
+matplotlib
