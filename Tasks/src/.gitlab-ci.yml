@@ -41,4 +41,3 @@ unit_tests:
     paths:
       - reports/
     expire_in: 7 days
-
