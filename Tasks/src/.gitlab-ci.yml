@@ -1,0 +1,44 @@
+stages:
+  - lint
+  - test
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+
+lint:
+  stage: lint
+  image: python:3.11
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install -r code_databricks/requirements.txt
+  script:
+    - ruff --version
+    - ruff check code_databricks --output-format=github
+
+unit_tests:
+  stage: test
+  image: python:3.11
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install -r code_databricks/requirements.txt
+  script:
+    - mkdir -p reports
+    - |
+      pytest -q --maxfail=1 --disable-warnings \
+        --junitxml=reports/junit.xml \
+        --cov=code_databricks \
+        --cov-report=xml:reports/coverage.xml \
+        --cov-report=term-missing \
+        --cov-fail-under=85
+  artifacts:
+    when: always
+    reports:
+      junit: reports/junit.xml
+    paths:
+      - reports/
+    expire_in: 7 days
+
