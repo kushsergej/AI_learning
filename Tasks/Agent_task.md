@@ -1,6 +1,6 @@
-Goal: Add unit tests stage for a project template, described below, using PyTest
+Goal: Add unit tests CI stage for a project template, described below, into @Tasks/src/.gitlab-ci.yml
 
-Context: Project template is inside @Tasks/src/* directory. Inside @Tasks/src/code_databricks/databricks_notebooks/*.py and @Tasks/src/code_databricks/databricks_jobs/*.py there are python files.
+Context: Use PyTest. Project template is inside @Tasks/src/* directory. Inside @Tasks/src/code_databricks/databricks_notebooks/*.py and @Tasks/src/code_databricks/databricks_jobs/*.py there are python files.
 
 Constraints:
  - keep test coverage > 85% in @Tasks/src/code_databricks/*
