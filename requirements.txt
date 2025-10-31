@@ -3,5 +3,6 @@ ipywidgets
 torch
 huggingface_hub
 transformers
+adapters
 numpy
 matplotlib
