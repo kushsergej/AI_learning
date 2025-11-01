@@ -6,3 +6,5 @@ transformers
 adapters
 numpy
 matplotlib
+bitsandbytes
+accelerate
