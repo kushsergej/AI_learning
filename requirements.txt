@@ -1,10 +1,9 @@
-ipykernel
-ipywidgets
-torch
+dotenv
+hf_xet
 huggingface_hub
 transformers
-adapters
+accelerate
+sentence_transformers
 numpy
 matplotlib
 bitsandbytes
-accelerate
