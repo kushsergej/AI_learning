@@ -7,3 +7,5 @@ sentence_transformers
 numpy
 matplotlib
 bitsandbytes
+peft
+datasets
