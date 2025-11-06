@@ -7,7 +7,3 @@ source .venv/Scripts/activate
 uv add -r requirements.txt
 
 # uv run main.py
-
-# uv run scripts/embeddings.py &
-# uv run scripts/huggingface_play.py &
-# wait

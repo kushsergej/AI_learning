@@ -6,6 +6,6 @@ accelerate
 sentence_transformers
 numpy
 matplotlib
-bitsandbytes
+# bitsandbytes
 peft
 datasets
