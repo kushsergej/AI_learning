@@ -58,10 +58,10 @@ trainer = Trainer(
         auto_find_batch_size=True,
         num_train_epochs=1,
         learning_rate=2e-4,
-        bf16=True,
         save_total_limit=2,
         logging_steps=10,
         output_dir='QLoRA_outputs',
+        overwrite_output_dir=True,
         save_strategy='epoch'
     ),
     data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False)
@@ -69,7 +69,9 @@ trainer = Trainer(
 trainer.train()
 
 
-# model_to_save.save_pretrained('QLoRA_outputs')
+model_to_save = 'QLoRA_outputs/checkpoint_final'
+trainer.save_model(model_to_save)
+tokenizer.save_pretrained(model_to_save)
 # lora_config = LoraConfig.from_pretrained('QLoRA_outputs')
 # model_4bit = get_peft_model(model_4bit, lora_config)
 
