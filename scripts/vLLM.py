@@ -1,25 +1,29 @@
 # vLLM usage when using quantized model
 
-from vllm import LLM
+import os
+import hf_xet
+from dotenv import load_dotenv
+from huggingface_hub import login
 from transformers import AutoTokenizer
+from vllm import LLM, SamplingParams
 
+
+load_dotenv()
 login(token=os.getenv('HF_READ_TOKEN'))
 model_id = 'ibm-granite/granite-4.0-1b'
+
 
 # ls -la /c/Users/Siarhei_Kushniaruk/.cache/huggingface/hub
 tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=True)
 
-engine = LLM(
-    model=model_id,
-    max_num_seqs=8,
-    max_num_batched_tokens=512,
-    dtype="float16",
-    gpu_memory_utilization=0.9,
-    enforce_eager=False,
-    enable_chunked_prefill=True
-)
 
-prompt = 'Once upon a time'
+prompts = [
+    'Hello, my name is',
+    'The president of the United States is',
+]
 
-result = engine.generate(prompt, max_tokens=256)
+
+sampling_params = SamplingParams(temperature=0.2, top_p=0.9)
+engine = LLM(model=model_id)
+result = engine.generate(prompt, sampling_params, max_tokens=256)
 print(result)
