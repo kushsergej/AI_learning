@@ -10,3 +10,7 @@ matplotlib
 peft
 datasets
 # vllm
+
+fastapi
+pydantic
+uvicorn

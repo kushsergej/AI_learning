@@ -9,4 +9,4 @@ alwaysApply: true
  - Segregate big and complex tasks on a set of smaller subtasks; each of those smaller changes should resolve one simple action and checked or tested
  - Create a new chat for each subtask
  - Add to each chat only that files which are required for subtask resolving
- - Start reply with information, which Model was used to generate it
+ - Start reply with information, which Model was used to generate that reply

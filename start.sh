@@ -6,4 +6,4 @@ source .venv/Scripts/activate
 
 uv add -r requirements.txt
 
-# uv run main.py
+uv run app/main.py

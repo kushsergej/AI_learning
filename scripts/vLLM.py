@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from huggingface_hub import login
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
+from vllm.sampling_params import GuidedDecodingParams
 
 
 load_dotenv()
@@ -23,7 +24,8 @@ prompts = [
 ]
 
 
-sampling_params = SamplingParams(temperature=0.2, top_p=0.9)
+guided_decoding_params = GuidedDecodingParams(choice=["Positive", "Negative"])
+sampling_params = SamplingParams(guided_decoding=guided_decoding_params, temperature=0.2, top_p=0.9)
 engine = LLM(model=model_id)
 result = engine.generate(prompt, sampling_params, max_tokens=256)
 print(result)
