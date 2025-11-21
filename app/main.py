@@ -1,22 +1,10 @@
+import os
 import logging
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-
-
-
-# load model from HuggingFace
-try:
-    model_id = 'ibm-granite/granite-3.3-2b-instruct'
-    tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=True)
-    model = AutoModelForCausalLM.from_pretrained(model_id, device_map='auto')
-    pipe = pipeline(task='text-generation', model=model, tokenizer=tokenizer)
-    print(f'✅ Model {model_id} loaded successfully')
-except Exception as e:
-    pipe = None
-    print(f'❌ Error loading model: {e}')
 
 
 
@@ -29,6 +17,19 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger()
+
+
+
+# load pre-installed model
+try:
+    model_path = os.getenv('MODEL_PATH', './model_cache')
+    tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
+    model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto')
+    pipe = pipeline(task='text-generation', model=model, tokenizer=tokenizer)
+    logger.info(f'✅ Model {model_id} loaded successfully')
+except Exception as e:
+    pipe = None
+    logger.info(f'❌ Error loading model: {e}')
 
 
 
@@ -58,18 +59,18 @@ class LLM_Response(BaseModel):
 async def healthcheck() -> Response:
     if pipe:
         return JSONResponse(status_code=200, content={'status': 'Healthy'})
-    return JSONResponse(status_code=500, content={'error': str(e)})
+    return JSONResponse(status_code=500, content={'error': 'Model not loaded'})
 
 
 
 @app.post('/llm', response_model=LLM_Response)
 async def llm_response(llm_request: LLM_Request):
     if not pipe:
-        return JSONResponse(status_code=500, content={'error': str(e)})
+        return JSONResponse(status_code=500, content={'error': 'Model not loaded'})
     try:
         logger.info(f'Initial prompt: {llm_request.llm_prompt}')
 
-        result = result = pipe(
+        result = pipe(
             llm_request.llm_prompt,
             temperature=0.2,
             top_p=0.9,
@@ -79,7 +80,7 @@ async def llm_response(llm_request: LLM_Request):
         )
         return LLM_Response(llm_response=f'{result[0]['generated_text']} [from {model_id}]')
     except Exception as e:
-        return {'err message': str(e)}
+        return JSONResponse(status_code=500, content={'err message': str(e)})
 
 
 
@@ -97,3 +98,5 @@ if __name__ == '__main__':
 # docker run -d -p 8000:8000 --name myapp fastapi-llm
 
 #  curl --silent --request POST --header 'Content-Type: application/json' --data '{"llm_prompt": "Who is the Rome Pope now?"}' http://localhost:8000/llm
+
+# MCP https://www.revolut.com/currency-converter/convert-pln-to-eur-exchange-rate

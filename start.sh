@@ -6,4 +6,7 @@ source .venv/Scripts/activate
 
 uv add -r requirements.txt
 
-uv run app/main.py
+# cd app/
+# uv run app/download_model.py &
+# uv run app/main.py &
+# wait

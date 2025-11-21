@@ -12,3 +12,5 @@
 .id_rsa
 .id_dsa
 .ssh/*
+app/__pycache__/*
+app/model_cache/*
