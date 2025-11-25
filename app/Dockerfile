@@ -1,25 +1,30 @@
-# Use a slim Python image as a base
-FROM python:3.13-slim
+# 1. Use the official vLLM image as base to inherit compiled CUDA kernels
+# This saves ~15 minutes of build time and ensures GPU compatibility.
+FROM vllm/vllm-openai:latest
 
-# Set working directory
+
+# 2. Set working directory
 WORKDIR /app
 
-# Copy dependency files and install packages first (for better Docker caching)
+
+# 3. Install your app-specific dependencies (vLLM, torch, and CUDA libraries are already installed in the base)
 COPY app_requirements.txt .
 RUN pip install --upgrade pip && \
-    pip install -r app_requirements.txt && \
+    pip install --no-cache-dir -r app_requirements.txt && \
     pip cache purge
 
-# Download model locally (if not downloaded)
-COPY model_cache/ ./model_cache/
-COPY download_model.py .
-RUN python3 download_model.py
 
-# Copy the application code
+# 4. Copy your application code
 COPY main.py .
 
-# Expose the port (FastAPI default is 8000)
+
+# 5. Environment variables for the model
+ENV MODEL_PATH=/app/model_snapshot
+
+
+# 6. Expose the port (FastAPI default is 8000)
 EXPOSE 8000
 
-# Define the command to run the FastAPI application with Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# 7. Override the base image's entrypoint (which defaults to vllm server)
+ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

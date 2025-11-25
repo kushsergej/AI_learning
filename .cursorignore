@@ -13,4 +13,4 @@
 **/*.id_dsa
 **/.ssh/*
 **/__pycache__/*
-**/model_cache/*
+**/model_snapshot/*

@@ -1,0 +1,75 @@
+import os
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.engine.arg_utils import AsyncEngineArgs
+from vllm.sampling_params import SamplingParams
+from vllm.utils import random_uuid
+
+app = FastAPI()
+
+# Global engine variable
+engine = None
+
+class PromptRequest(BaseModel):
+    prompt: str
+    max_tokens: int = 100
+    temperature: float = 0.7
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize the vLLM engine on app startup."""
+    global engine
+    
+    model_path = os.getenv("MODEL_PATH")
+    if not model_path or not os.path.exists(model_path):
+        raise RuntimeError(f"Model path not found: {model_path}")
+
+    print(f"🚀 Initializing vLLM with model at: {model_path}")
+    
+    # Configure engine arguments
+    engine_args = AsyncEngineArgs(
+        model=model_path,
+        # Optimization: limit GPU memory usage to leave room for other overhead
+        gpu_memory_utilization=0.90,
+        # Critical for running inside a container if shared memory is tight
+        enforce_eager=False 
+    )
+    
+    engine = AsyncLLMEngine.from_engine_args(engine_args)
+
+@app.post("/generate")
+async def generate(request: PromptRequest):
+    """Custom endpoint that uses the decoupled vLLM engine."""
+    request_id = random_uuid()
+    
+    # Define sampling parameters
+    sampling_params = SamplingParams(
+        temperature=request.temperature,
+        max_tokens=request.max_tokens
+    )
+
+    # Send request to the engine
+    results_generator = engine.generate(
+        request.prompt,
+        sampling_params,
+        request_id
+    )
+
+    # Stream the result (non-streaming final response for simplicity)
+    final_output = None
+    async for request_output in results_generator:
+        final_output = request_output
+
+    if final_output:
+        return {
+            "prompt": request.prompt,
+            "generated_text": final_output.outputs[0].text,
+            "finish_reason": final_output.outputs[0].finish_reason
+        }
+    
+    raise HTTPException(status_code=500, detail="Generation failed")
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
