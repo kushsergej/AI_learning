@@ -23,10 +23,11 @@ logger = logging.getLogger()
 # load pre-installed model
 try:
     model_path = os.getenv('MODEL_PATH', './model_cache')
+    logger.info(model_path)
     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
     model = AutoModelForCausalLM.from_pretrained(model_path, device_map='auto')
     pipe = pipeline(task='text-generation', model=model, tokenizer=tokenizer)
-    logger.info(f'✅ Model {model_id} loaded successfully')
+    logger.info(f'✅ Model loaded successfully')
 except Exception as e:
     pipe = None
     logger.info(f'❌ Error loading model: {e}')
@@ -78,7 +79,7 @@ async def llm_response(llm_request: LLM_Request):
             do_sample=True,
             return_full_text=False
         )
-        return LLM_Response(llm_response=f'{result[0]['generated_text']} [from {model_id}]')
+        return LLM_Response(llm_response=f'{result[0]['generated_text']} [from {model}]')
     except Exception as e:
         return JSONResponse(status_code=500, content={'err message': str(e)})
 
@@ -87,16 +88,6 @@ async def llm_response(llm_request: LLM_Request):
 if __name__ == '__main__':
     uvicorn.run(
         'main:app',
-        host='localhost',
+        host='0.0.0.0',
         port=8000
         )
-
-
-
-# ------------------------------------- #
-# docker build -t fastapi-llm ./app
-# docker run -d -p 8000:8000 --name myapp fastapi-llm
-
-#  curl --silent --request POST --header 'Content-Type: application/json' --data '{"llm_prompt": "Who is the Rome Pope now?"}' http://localhost:8000/llm
-
-# MCP https://www.revolut.com/currency-converter/convert-pln-to-eur-exchange-rate
