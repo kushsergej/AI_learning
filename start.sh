@@ -9,7 +9,11 @@ uv add -r requirements.txt
 
 # decouple LLM and code (save LLM weights locally)
 uv run app/download_model.py
-docker build --progress=plain -t fastapi-llm -f app/Dockerfile app/
+docker build \
+    # --progress=plain \
+    -t fastapi-llm \
+    -f app/Dockerfile \
+    app/
 docker image ls
 # docker rm -f myapp 2>/dev/null || true
 # docker run -d -p 8000:8000 --name myapp fastapi-llm
