@@ -14,8 +14,9 @@ RUN pip install --upgrade pip && \
     pip cache purge
 
 
-# 4. Copy your application code
+# 4. Copy your application code and locally downloaded model into the image
 COPY main.py .
+# COPY model_snapshot ./model_snapshot
 
 
 # 5. Environment variables for the model

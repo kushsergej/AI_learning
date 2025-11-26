@@ -1,3 +1,4 @@
+import os
 import logging
 from vllm import LLM, SamplingParams
 from fastapi import FastAPI, Request, Response
@@ -17,12 +18,12 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
-# load pre-installed model
+# initialize pre-installed model
 try:
     model_path = os.getenv('MODEL_PATH', 'app/model_snapshot')
-    logger.info(f'✅ Loading model from: {model_path}')
+    logger.info(f'✅ Initializing model from: {model_path}')
     engine = LLM(model=model_path, trust_remote_code=True)
-    logger.info(f'✅ Model loaded successfully')
+    logger.info(f'✅ Model initialized successfully')
 except Exception as e:
     engine = None
     print(f'❌ Error loading model: {e}')
@@ -33,9 +34,9 @@ app = FastAPI()
 
 @app.middleware('http')
 async def log_requests(request: Request, call_next) -> Response:
-    logger.info(f'Incoming request: {request.method} {request.url}')
+    logger.info(f'✅ Incoming request: {request.method} {request.url}')
     response = await call_next(request)
-    logger.info(f'Response status: {response.status_code}')
+    logger.info(f'✅ Response status: {response.status_code}')
     return response
 
 
@@ -52,26 +53,29 @@ class LLM_Response(BaseModel):
 # FastAPI endpoints
 @app.get('/')
 async def healthcheck() -> Response:
-    if engine:
-        return JSONResponse(status_code=200, content={'status': '✅ Healthy'})
-    return JSONResponse(status_code=500, content={'error': '❌ Error loading model'})
+    try:
+        logger.info(f'✅ healthcheck (GET)')
+        return JSONResponse(status_code=200, content={'status': '✅ vLLM engine is healthy'})
+    except Exception as e:
+        logger.error(f'❌ Error during healthcheck (GET): {e}')
+        return JSONResponse(status_code=500, content={'❌ vLLM is unhealthy (GET)': str(e)})
 
 
 @app.post('/llm', response_model=LLM_Response)
 async def llm_response(llm_request: LLM_Request):
     if not engine:
-        return JSONResponse(status_code=500, content={'error': '❌ Error loading model'})
+        return JSONResponse(status_code=500, content={'error': '❌ vLLM engine is unhealthy (POST)'})
     try:
-        logger.info(f'✅ Initial prompt: {llm_request.llm_prompt}')
+        logger.info(f'✅ User prompt: {llm_request.llm_prompt}')
 
-       sampling_params = SamplingParams(
+        sampling_params = SamplingParams(
             temperature=0.2,
             top_p=0.9,
             max_tokens=256
         )
         result = engine.generate([llm_request.llm_prompt], sampling_params)
 
-        return LLM_Response(llm_response=f'{result[0]text} [from vLLM]')
+        return LLM_Response(llm_response=f'{result[0].outputs[0].text} [from vLLM]')
     except Exception as e:
         logger.error(f'❌ Error during generation: {e}')
         return JSONResponse(status_code=500, content={'❌ Error during generation': str(e)})
