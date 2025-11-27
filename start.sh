@@ -8,6 +8,7 @@ source .venv/Scripts/activate
 uv add -r requirements.txt
 
 
+
 # decouple LLM and code (save LLM weights locally)
 uv run app/download_model.py
 

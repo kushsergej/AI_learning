@@ -20,7 +20,7 @@ logger = logging.getLogger()
 
 # initialize pre-installed model
 try:
-    model_path = os.getenv('MODEL_PATH', 'app/model_snapshot')
+    model_path = os.getenv('MODEL_PATH', '/app/model_snapshot')
     logger.info(f'✅ Initializing model from: {model_path}')
     engine = LLM(model=model_path, trust_remote_code=True)
     logger.info(f'✅ Model initialized successfully')
@@ -43,8 +43,6 @@ async def log_requests(request: Request, call_next) -> Response:
 # LLM class
 class LLM_Request(BaseModel):
     llm_prompt: str
-    max_tokens: int = 256
-    temperature: float = 0.7
 
 class LLM_Response(BaseModel):
     llm_response: str

@@ -1,16 +1,9 @@
+accelerate
+datasets
 dotenv
 hf_xet
 huggingface_hub
-transformers
-accelerate
-sentence_transformers
-numpy
 matplotlib
-# bitsandbytes
 peft
-datasets
+sentence_transformers
 # vllm
-
-fastapi
-pydantic
-uvicorn
