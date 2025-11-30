@@ -1,7 +1,7 @@
 import os
 import logging
-import asyncio
-from fastapi import FastAPI, Request, Response
+import torch
+from fastapi import FastAPI
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import uvicorn
 
@@ -22,17 +22,23 @@ logger = logging.getLogger()
 # FastAPI
 app = FastAPI()
 
+tokenizer = None
+model = None
 pipe = None
 
 @app.on_event('startup')
-async def init_llm():
-    global pipe
+def llm_startup():
+    global tokenizer, model, pipe
     model_path = os.getenv('MODEL_PATH')
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     try:
-        logger.info(f'🚀 Initializing Transformers model from: {model_path}')
-        tokenizer = await asyncio.to_thread(lambda: AutoTokenizer.from_pretrained(model_path, use_fast=True))
-        model = await asyncio.to_thread(lambda: AutoModelForCausalLM.from_pretrained(model_path))
-        pipe = await asyncio.to_thread(lambda: pipeline(task='text-generation', model=model, tokenizer=tokenizer))
+        logger.info(f'🚀 Initializing Transformers model from {model_path} on {model} model')
+        tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            torch_dtype=torch.float16 if device == "cuda" else None
+        ).to(device)
+        pipe = pipeline(task='text-generation', model, tokenizer)
         logger.info(f'✅ Model initialized successfully')
     except Exception as e:
         logger.error(f'❌ Error loading model: {e}')
@@ -46,23 +52,6 @@ async def log_requests(request: Request, call_next) -> Response:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # # LLM class
 # class LLM_Request(BaseModel):
 #     llm_prompt: str
@@ -71,32 +60,35 @@ async def log_requests(request: Request, call_next) -> Response:
 #     llm_response: str
 
 
-# # FastAPI endpoints
-# @app.get('/')
-# async def healthcheck() -> Response:
-#     try:
-#         logger.info(f'✅ healthcheck (GET)')
-#         return JSONResponse(status_code=200, content={'status': '✅ vLLM engine is healthy'})
-#     except Exception as e:
-#         logger.error(f'❌ Error during healthcheck (GET): {e}')
-#         return JSONResponse(status_code=500, content={'❌ vLLM is unhealthy (GET)': str(e)})
 
-
-# @app.post('/llm', response_model=LLM_Response)
-# async def llm_response(llm_request: LLM_Request):
-    if not engine:
-        return JSONResponse(status_code=500, content={'error': '❌ vLLM engine is unhealthy (POST)'})
+# FastAPI endpoints
+@app.get('/')
+def healthcheck():
     try:
-        logger.info(f'✅ User prompt: {llm_request.llm_prompt}')
+        logger.info(f'✅ healthcheck')
+        return JSONResponse(status_code=200, content={'status': '✅ LLM is healthy'})
+    except Exception as e:
+        logger.error(f'❌ healthcheck failed: {e}')
+        return JSONResponse(status_code=500, content={'❌ LLM is unhealthy': str(e)})
 
-        sampling_params = SamplingParams(
+
+@app.post('/generate')
+def llm_response(prompt: str):
+    if not model or not tokenizer:
+        return JSONResponse(status_code=500, content={'❌ LLM is unhealthy': str(e)})
+    try:
+        logger.info(f'✅ User prompt: {prompt}')
+        result = pipe(
+            prompt,
             temperature=0.2,
             top_p=0.9,
-            max_tokens=256
+            max_new_tokens=256,
+            do_sample=True,
+            return_full_text=False
         )
-        result = engine.generate([llm_request.llm_prompt], sampling_params)
-
-        return LLM_Response(llm_response=f'{result[0].outputs[0].text} [from vLLM]')
+        generated_text = result[0]['generated_text']
+        logger.info(f'✅ LLM response: {generated_text}')
+        return JSONResponse(status_code=200, content={'response': f'✅ LLM is healthy {generated_text}'})
     except Exception as e:
         logger.error(f'❌ Error during generation: {e}')
         return JSONResponse(status_code=500, content={'❌ Error during generation': str(e)})
@@ -107,4 +99,4 @@ if __name__ == '__main__':
         'main:app',
         host='0.0.0.0',
         port=8000
-        )
+    )
