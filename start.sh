@@ -30,6 +30,8 @@ docker container ls
 
 
 # ------------------------------------- #
-#  curl --request POST --header 'Content-Type: application/json' --data '{"llm_prompt": "Who is the Rome Pope now?"}' http://localhost:8000/llm
+# curl --request GET http://localhost:8000/docs
+# curl --request POST --header 'Content-Type: application/json' --data '{"message": "Who is the Rome Pope now?"}' http://localhost:8000/generate
 
+# MCP https://www.revolut.com/currency-converter/convert-eur-to-pln-exchange-rate?amount=38757.37
 # MCP https://www.revolut.com/currency-converter/convert-pln-to-eur-exchange-rate?amount=164540

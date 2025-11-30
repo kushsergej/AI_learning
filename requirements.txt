@@ -8,6 +8,5 @@ peft
 sentence_transformers
 # vllm
 
-
 fastapi
 uvicorn
