@@ -1,7 +1,8 @@
 import os
 import logging
 import torch
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import uvicorn
 
@@ -29,16 +30,17 @@ pipe = None
 @app.on_event('startup')
 def llm_startup():
     global tokenizer, model, pipe
-    model_path = os.getenv('MODEL_PATH')
+    model_path = os.getenv('MODEL_PATH', 'app/model_snapshot')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     try:
         logger.info(f'🚀 Initializing Transformers model from {model_path} on {model} model')
         tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
-            torch_dtype=torch.float16 if device == "cuda" else None
+            torch_dtype=torch.float16 if device == "cuda" else None,
+            local_files_only=True
         ).to(device)
-        pipe = pipeline(task='text-generation', model, tokenizer)
+        pipe = pipeline(task='text-generation', model=model, tokenizer=tokenizer)
         logger.info(f'✅ Model initialized successfully')
     except Exception as e:
         logger.error(f'❌ Error loading model: {e}')

@@ -8,7 +8,6 @@ source .venv/Scripts/activate
 uv add -r requirements.txt
 
 
-
 # decouple LLM and code (save LLM weights locally)
 uv run app/download_model.py
 
@@ -20,7 +19,6 @@ docker image ls
 
 docker rm -f llm_backend 2>/dev/null || true
 MSYS_NO_PATHCONV=1 docker run -d \
-    --gpus all \
     -v $(pwd)/app/model_snapshot:/app/model_snapshot \
     -p 8000:8000 \
     --name llm_backend \
