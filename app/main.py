@@ -1,10 +1,10 @@
 import os
 import logging
-from vllm import LLM, SamplingParams
+import asyncio
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import uvicorn
+
 
 
 # logging
@@ -18,19 +18,24 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
-# initialize pre-installed model
-try:
-    model_path = os.getenv('MODEL_PATH', '/app/model_snapshot')
-    logger.info(f'✅ Initializing model from: {model_path}')
-    engine = LLM(model=model_path, trust_remote_code=True)
-    logger.info(f'✅ Model initialized successfully')
-except Exception as e:
-    engine = None
-    print(f'❌ Error loading model: {e}')
-
 
 # FastAPI
 app = FastAPI()
+
+pipe = None
+
+@app.on_event('startup')
+async def init_llm():
+    global pipe
+    model_path = os.getenv('MODEL_PATH')
+    try:
+        logger.info(f'🚀 Initializing Transformers model from: {model_path}')
+        tokenizer = await asyncio.to_thread(lambda: AutoTokenizer.from_pretrained(model_path, use_fast=True))
+        model = await asyncio.to_thread(lambda: AutoModelForCausalLM.from_pretrained(model_path))
+        pipe = await asyncio.to_thread(lambda: pipeline(task='text-generation', model=model, tokenizer=tokenizer))
+        logger.info(f'✅ Model initialized successfully')
+    except Exception as e:
+        logger.error(f'❌ Error loading model: {e}')
 
 @app.middleware('http')
 async def log_requests(request: Request, call_next) -> Response:
@@ -40,27 +45,45 @@ async def log_requests(request: Request, call_next) -> Response:
     return response
 
 
-# LLM class
-class LLM_Request(BaseModel):
-    llm_prompt: str
-
-class LLM_Response(BaseModel):
-    llm_response: str
 
 
-# FastAPI endpoints
-@app.get('/')
-async def healthcheck() -> Response:
-    try:
-        logger.info(f'✅ healthcheck (GET)')
-        return JSONResponse(status_code=200, content={'status': '✅ vLLM engine is healthy'})
-    except Exception as e:
-        logger.error(f'❌ Error during healthcheck (GET): {e}')
-        return JSONResponse(status_code=500, content={'❌ vLLM is unhealthy (GET)': str(e)})
 
 
-@app.post('/llm', response_model=LLM_Response)
-async def llm_response(llm_request: LLM_Request):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # LLM class
+# class LLM_Request(BaseModel):
+#     llm_prompt: str
+
+# class LLM_Response(BaseModel):
+#     llm_response: str
+
+
+# # FastAPI endpoints
+# @app.get('/')
+# async def healthcheck() -> Response:
+#     try:
+#         logger.info(f'✅ healthcheck (GET)')
+#         return JSONResponse(status_code=200, content={'status': '✅ vLLM engine is healthy'})
+#     except Exception as e:
+#         logger.error(f'❌ Error during healthcheck (GET): {e}')
+#         return JSONResponse(status_code=500, content={'❌ vLLM is unhealthy (GET)': str(e)})
+
+
+# @app.post('/llm', response_model=LLM_Response)
+# async def llm_response(llm_request: LLM_Request):
     if not engine:
         return JSONResponse(status_code=500, content={'error': '❌ vLLM engine is unhealthy (POST)'})
     try:

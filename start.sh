@@ -12,18 +12,18 @@ uv add -r requirements.txt
 # decouple LLM and code (save LLM weights locally)
 uv run app/download_model.py
 
-docker build \
-    -t fastapi-llm \
+DOCKER_BUILDKIT=1 docker build \
+    -t kushsergej-llm \
     -f app/Dockerfile \
     app/
 docker image ls
 
-docker rm -f myapp 2>/dev/null || true
+docker rm -f llm_backend 2>/dev/null || true
 MSYS_NO_PATHCONV=1 docker run -d \
     -v $(pwd)/app/model_snapshot:/app/model_snapshot \
     -p 8000:8000 \
-    --name myapp \
-    fastapi-llm
+    --name llm_backend \
+    kushsergej-llm
 docker container ls
 
 

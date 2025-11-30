@@ -11,5 +11,6 @@ build/
 .venv
 venv/
 ENV/
-app/__pycache__/*
-app/model_snapshot/*
+__pycache__/
+**/__pycache__/
+model_snapshot/
