@@ -1,4 +1,5 @@
-FROM huggingface/transformers-pytorch-gpu:latest
+FROM python:3.13-slim
+# FROM huggingface/transformers-pytorch-gpu:latest
 
 WORKDIR /app
 

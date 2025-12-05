@@ -3,7 +3,8 @@ from typing import Optional
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import uvicorn
 import os
