@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY app_requirements.txt .
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir --user -r app_requirements.txt && \
+    pip install --no-cache-dir -r app_requirements.txt && \
     pip cache purge
 
 COPY main.py .
