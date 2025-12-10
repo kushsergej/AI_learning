@@ -8,5 +8,9 @@ peft
 sentence_transformers
 # vllm
 
+
 fastapi
 uvicorn
+
+mcp
+httpx

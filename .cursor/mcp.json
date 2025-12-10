@@ -39,6 +39,12 @@
         "--rm",
         "hashicorp/terraform-mcp-server"
       ]
+    },
+    "revolut": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Siarhei_Kushniaruk\\Desktop\\AI_learning\\app\\server\\main.py"
+      ]      
     }
   }
 }
