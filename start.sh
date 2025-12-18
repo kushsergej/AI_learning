@@ -11,7 +11,6 @@ uv add -r requirements.txt
 # decouple LLM and code (save LLM weights locally)
 uv run app/download_model.py
 
-
 # docker build \
 #     -t kushsergej-llm:v1 \
 #     -f app/Dockerfile \

@@ -41,11 +41,10 @@
       ]
     },
     "revolut": {
-      "command": "python",
+      "command": "python3",
       "args": [
-        "app/mcp_server.py"
-      ],
-      "name": "Revolut"
+        "app/server/revolut_mcp_server.py"
+      ]
     }
   }
 }
