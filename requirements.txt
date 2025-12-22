@@ -12,4 +12,5 @@ sentence_transformers
 fastapi
 uvicorn
 
+httpx
 mcp

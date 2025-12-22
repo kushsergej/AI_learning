@@ -3,7 +3,12 @@ description: applicable when working with python
 alwaysApply: false
 ---
 
- - Use uv and run with python3
+ - Use 'uv' and run with python3
+ - All functions should have complete type annotations (parameters and return types)
+ - Use 'X | None' instead of 'Optional[X]'
+ - No 'Any' types unless absolutely necessary
+
+
  - Always propose to start with file below:
 '''
 #!/bin/bash

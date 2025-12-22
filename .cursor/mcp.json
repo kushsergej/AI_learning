@@ -3,25 +3,11 @@
     "playwright": {
       "command": "npx",
       "args": [
-        "-y",
-        "@executeautomation/playwright-mcp-server"
+        "@playwright/mcp@latest"
       ]
     },
     "context7": {
       "url": "https://mcp.context7.com/mcp"
-    },
-    "github": {
-      "command": "docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server",
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "GITHUB_PERSONAL_ACCESS_TOKEN"
-      }
-    },
-    "gitlab": {
-      "command": "docker run -i --rm -e GITLAB_PERSONAL_ACCESS_TOKEN -e GITLAB_API_URL mcp/gitlab",
-      "env": {
-        "GITLAB_PERSONAL_ACCESS_TOKEN": "GITLAB_PERSONAL_ACCESS_TOKEN",
-        "GITLAB_API_URL": "https://gitlab.com/api/v4"
-      }
     },
     "microsoft.docs.mcp": {
       "command": "npx",
@@ -40,10 +26,10 @@
         "hashicorp/terraform-mcp-server"
       ]
     },
-    "revolut": {
+    "exchange": {
       "command": "python3",
       "args": [
-        "app/server/revolut_mcp_server.py"
+        "app/server/mcp_server.py"
       ]
     }
   }
