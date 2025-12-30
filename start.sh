@@ -11,19 +11,22 @@ uv sync
 # decouple LLM and code (save LLM weights locally)
 uv run app/download_model.py
 
-# docker build \
-#     -t kushsergej-llm:v1 \
-#     -f app/Dockerfile \
-#     app/
-# docker image ls
+docker build \
+    --tag kushsergej-llm:latest \
+    --file app/Dockerfile \
+    app/
+docker image ls
 
-# docker rm -f llm_backend 2>/dev/null || true
-# MSYS_NO_PATHCONV=1 docker run -d \
-#     -v $(pwd)/app/model_snapshot:/app/model_snapshot \
-#     -p 8000:8000 \
-#     --name llm_backend \
-#     kushsergej-llm:v1
-# docker container ls
+docker rm -f llm_backend 2>/dev/null || true
+# MSYS_NO_PATHCONV=1 docker run -d --rm \
+MSYS_NO_PATHCONV=1 docker run -d \
+    -v $(pwd)/app/model_snapshot:/app/model_snapshot \
+    -p 8000:8000 \
+    --name llm_backend \
+    kushsergej-llm:latest
+docker container ls -a
+
+docker volume ls
 
 
 

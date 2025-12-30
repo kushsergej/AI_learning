@@ -34,7 +34,7 @@ async def get_request(url: str) -> Dict[str, Any] | None:
 
 # Tools (specific operations/actions with typed inputs and outputs)
 @mcp.tool()
-async def google_convert(currency_from: str, currency_to: str, amount: float) -> Dict[str, Any] | None:
+async def google_converter(currency_from: str, currency_to: str, amount: float) -> Dict[str, Any] | None:
     '''
     Converts a specified amount from one currency to another using the current exchange rate.
     Args:
@@ -55,6 +55,21 @@ async def google_convert(currency_from: str, currency_to: str, amount: float) ->
         }
     except Exception as e:
         return {'error': str(e)}
+
+
+
+# Prompts
+@mcp.prompt()
+async def exchange_analyzer(currency_from: str, currency_to: str, amount: float) -> str:
+    ''' Global instructions for exchange analyzis '''
+    return f'''
+        You are financial analyst who makes calculations of {currency_from} currency
+        in amount of {amount} to {currency_to} currency.
+        To fetch actual exchange rate, you use {google_converter()} MCP tool.
+        ** Preferences **
+        - Keep communication to user concise and clear
+    '''
+
 
 
 def main():

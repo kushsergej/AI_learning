@@ -11,6 +11,7 @@ RUN pip install --upgrade pip && \
 COPY main.py .
 
 ENV MODEL_PATH=/app/model_snapshot
+ENV TZ=Europe/Warsaw
 
 EXPOSE 8000
 

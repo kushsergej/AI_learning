@@ -17,19 +17,13 @@
         "https://learn.microsoft.com/api/mcp"
       ]
     },
-    "terraform": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "hashicorp/terraform-mcp-server"
-      ]
-    },
     "exchange": {
-      "command": "python3",
+      "command": "C:\\Users\\Siarhei_Kushniaruk\\.local\\bin\\uv.exe",
       "args": [
-        "app/server/mcp_server.py"
+        "--directory",
+        "C:\\Users\\Siarhei_Kushniaruk\\Desktop\\AI_learning\\app\\mcp-server\\",
+        "run",
+        "mcp_server.py"
       ]
     }
   }
