@@ -48,45 +48,41 @@ Short summary
 2) High-level architecture (big picture)
 - app/
   - main.py: FastAPI app that loads AutoTokenizer and AutoModelForCausalLM from a local snapshot (app/model_snapshot). Uses an async Lifespan context manager to initialize the model at startup. Exposes:
-    - GET / — healthcheck
+    - GET / — healthcheck endpoint
     - POST /generate — accepts JSON {message, temperature?, max_tokens?} and returns generated text
-  - mcp-server/: FastMCP-based MCP server (mcp_server.py) exposing typed tools and prompts (currency-conversion example).
-  - model_snapshot/: packaged model files. main.py uses local_files_only=True — keep model files present locally or set MODEL_PATH.
-- scripts/: utilities and training/finetune scripts (QLoRA_fine_tune.py, embeddings.py, etc.). Not wired into CI.
-- start.sh: canonical developer flow using uv helper: create venv, install deps, download model, optional Docker steps.
+  - mcp-server/: FastMCP-based MCP server (mcp_server.py) exposing typed tools and prompts (currency-conversion example as reference).
+  - model_snapshot/: packaged model files (IBM Granite 3.3 2B Instruct by default). main.py uses local_files_only=True — keep model files present locally or set MODEL_PATH.
+  - Dockerfile: containerizes the API server with model snapshot volumes.
+- scripts/: standalone utilities not wired into CI:
+  - QLoRA_fine_tune.py: parameter-efficient fine-tuning example using PEFT.
+  - embeddings.py: sentence embeddings utilities.
+  - huggingface_play.py, vLLM.py, sigmoid_plot.py: exploratory scripts.
+- start.sh: canonical developer flow using uv helper: create venv, install deps, download model, Docker build/run examples.
 
 3) Key conventions and repository-specific patterns
 - "uv" workflow:
   - Use uv for venv creation, dependency installation, and running helper scripts. See start.sh for canonical steps.
 - Model placement and loading:
   - Default model path: app/model_snapshot. Override via MODEL_PATH environment variable (export MODEL_PATH=/path/to/model).
+  - download_model.py uses snapshot_download to fetch IBM Granite 3.3 2B Instruct from HuggingFace Hub. Excludes .pt/.bin weights if safetensors exist.
   - main.py loads with local_files_only=True — avoid auto-downloads during startup.
 - Device & dtype handling:
-  - main.py detects CUDA (torch.cuda.is_available()) and uses torch.float16 when on GPU. Keep dtype/device code when modifying inference.
+  - main.py detects CUDA (torch.cuda.is_available()) and uses torch.float16 when on GPU, else defaults to float32. Keep dtype/device code when modifying inference.
 - Generation defaults:
-  - Uses transformers pipeline(task='text-generation') with do_sample=True, top_p=0.9 by default. Requests pass temperature and max_new_tokens.
+  - Uses transformers pipeline(task='text-generation') with do_sample=True, top_p=0.9 by default. Request defaults: temperature=0.2, max_tokens=256.
 - Typing & style:
-  - Functions tend to use `X | None` types; prefer explicit parameter/return annotations and avoid broad `Any` unless necessary.
+  - Functions use explicit parameter/return annotations. Prefer `X | None` union types; avoid broad `Any` unless necessary.
+  - Logging uses logger (configured with INFO level at module startup).
 - MCP patterns:
-  - MCP server uses FastMCP; tools are decorated with @mcp.tool() and prompts with @mcp.prompt(). Follow these examples when adding tools.
+  - MCP server uses FastMCP; tools are decorated with @mcp.tool() with detailed docstrings. Prompts use @mcp.prompt(). Reference mcp_server.py for currency-conversion tool pattern.
 - Windows considerations:
   - start.sh expects a Unix-like shell. For native Windows, use WSL/Git Bash or adjust commands for PowerShell.
+- Error handling:
+  - API endpoints return JSONResponse with status codes. Generation errors are caught and logged. Model loading failures prevent startup.
 
-4) Files and AI assistant configs
-- Existing assistant configs found: none of .cursor/, CLAUDE.md, AGENTS.md, .windsurfrules, CONVENTIONS.md or similar appear in the repo root.
-- app/mcp-server/ contains FastMCP usage examples — reference these for tool patterns.
-
-5) Where to look next
-- app/main.py — model-loading & API endpoints
-- app/mcp-server/mcp_server.py — MCP tools and prompt examples
+4) Where to look next
+- app/main.py — model-loading, FastAPI endpoints, lifespan setup
+- app/mcp-server/mcp_server.py — MCP tools and prompt patterns
+- app/download_model.py — model snapshot download and placement
 - start.sh — canonical developer setup flow
-- app/model_snapshot/README.md — metadata for the bundled model snapshot
-
-Suggested improvements (small, non-breaking)
-- Add a short Docker run example for PowerShell into start.sh.
-- Add a minimal pytest test and ruff config to enable quick CI feedback.
-- Add a brief note in README pointing to MODEL_PATH and expected disk footprint for model_snapshot.
-
----
-
-This update is a minor, documentation-only change.  
+- pyproject.toml — dependency declarations
