@@ -1,77 +1,84 @@
-Repository-specific Copilot instructions
+﻿# Repository-specific Copilot instructions
+
+Short summary
+- Project: FastAPI service that loads a local Transformers causal LM snapshot and exposes / and /generate.
+- Key helpers: "uv" workflow (start.sh), local model snapshot at app/model_snapshot, simple MCP server at app/mcp-server.
+- Edit policy: Please approve before applying changes to this file.
 
 1) Build / install / run (project-specific)
-
-- Recommended local setup (uses "uv" helper as used in start.sh and .cursor rules):
+- Recommended local setup (uses "uv" helper as used in start.sh):
   - python3 -m pip install --upgrade uv
   - uv venv .venv --python 3.13 --clear
-  - Use bash: source .venv/bin/activate   (on Windows with bash/MSYS: source .venv/Scripts/activate)
+  - Activate venv:
+    - On macOS/Linux: source .venv/bin/activate
+    - On Windows (PowerShell/CMD under MSYS/MSYS2/bash): source .venv/Scripts/activate
   - uv add -r requirements.txt
   - uv sync
-  - To download the model snapshot (keeps LLM weights local):
-    - uv run app/download_model.py
+  - Download the local model snapshot (keeps LLM weights local): uv run app/download_model.py
 
-- Run the API server (two options):
-  - From repository root (recommended for dev):
+- Run the API server (development):
+  - From repository root (recommended):
     - uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-  - Or from inside app/ (start.sh assumes this):
+  - Or from app/ (start.sh uses this):
     - cd app && python main.py
   - Health/docs: http://localhost:8000/ and http://localhost:8000/docs
 
 - Docker (notes from start.sh):
-  - docker build --tag kushsergej-llm:latest --file app/Dockerfile app/
-  - Example runtime was commented in start.sh (volume-mount model_snapshot and expose 8000)
+  - Build image:
+    - docker build --tag kushsergej-llm:latest --file app/Dockerfile app/
+  - Suggested run (mount model_snapshot, expose 8000):
+    - docker run -d --rm -v "$(pwd)/app/model_snapshot:/app/model_snapshot" -p 8000:8000 --name llm_backend kushsergej-llm:latest
+  - The start.sh contains commented examples; adapt for Windows path quoting.
 
-- Tests & linting
-  - No test runner (pytest/unittest) or linter (flake8/mypy/ruff) configured in repository currently.
-  - If adding tests, use pytest and provide a single-test run command like: pytest path/to/test_file.py::test_name
+- Tests & linting:
+  - No test runner or linter are currently enforced in CI.
+  - If adding tests, use pytest; run a single test with:
+    - pytest path/to/test_file.py::test_name
+  - Recommended one-off lint/test commands (if you add tooling):
+    - ruff check path/to/module.py
+    - pytest -q path/to/test_file.py::test_name
 
 2) High-level architecture (big picture)
-
 - app/
-  - main.py: FastAPI app + lifecycle that loads a Transformers model (AutoTokenizer, AutoModelForCausalLM) from a local snapshot (app/model_snapshot).
-  - Model is loaded using local_files_only=True and selects device via torch.cuda.is_available(). The API exposes / (health) and /generate.
-  - app/model_snapshot/: packaged model files (README here documents the Granite model used).
-  - app/mcp-server/: MCP server implementation (mcp_server.py) exposing typed tools and prompts for tool-assisted tasks.
+  - main.py: FastAPI app. Loads AutoTokenizer and AutoModelForCausalLM from a local snapshot (app/model_snapshot). Uses a Lifespan context manager to initialize the model at startup. Exposes:
+    - GET / — healthcheck
+    - POST /generate — accepts JSON {message, temperature?, max_tokens?} and returns generated text
+  - mcp-server/: a small FastMCP-based MCP server (mcp_server.py) exposing typed tools/prompts (e.g., currency conversion example).
+  - model_snapshot/: packaged model files. main.py loads with local_files_only=True — model files must be present locally.
+- scripts/: utilities and training/finetune scripts (QLoRA_fine_tune.py, embeddings.py, etc.). Not wired into CI.
+- start.sh: canonical developer flow using uv helper: create venv, install deps, download model, optionally build/run Docker.
 
-- scripts/: utilities and training/finetune scripts (QLoRA_fine_tune.py, embeddings.py, etc.). These are not wired into CI.
+3) Key conventions and repository-specific patterns
+- "uv" workflow:
+  - This repo uses the "uv" helper for venv management and running small scripts. Follow start.sh for canonical commands.
+- Model placement and loading:
+  - Models live in app/model_snapshot by default. Use MODEL_PATH environment variable to override.
+  - main.py uses local_files_only=True; ensure model files exist locally before running.
+- Device & dtype handling:
+  - main.py detects CUDA (torch.cuda.is_available()) and uses torch.float16 when on GPU.
+  - Generation uses Transformers pipeline(task='text-generation') with do_sample=True and top_p tuning. Keep heavy inference considerations in mind when modifying generation logic.
+- Typing & style:
+  - Prefer `X | None` over `Optional[X]`. Avoid broad `Any` unless necessary. Functions should include parameter and return type annotations.
+- MCP & assistant rules:
+  - An MCP server is present at app/mcp-server/mcp_server.py; it uses FastMCP.
+  - Existing assistant behavior/config may reference .cursor rules (see notes below). If adding MCP servers, follow existing FastMCP patterns in that module.
+- Windows specifics:
+  - start.sh and some examples assume a Unix-like shell; running on native Windows may require adapting commands or using Git Bash / WSL / MSYS.
 
-- .cursor/: AI assistant settings and MCP server definitions. .cursor/rules/* defines agent behavior and python-specific rules; .cursor/mcp.json contains MCP server configs (e.g., "exchange" server that runs the app/mcp-server/ converter via uv).
+4) Where to look next
+- app/main.py — primary entrypoint and model-loading lifecycle
+- app/mcp-server/mcp_server.py — example MCP tools/prompts
+- app/model_snapshot/README.md — model metadata and guidance for the bundled snapshot
+- start.sh — step-by-step setup (uses uv helper)
+- pyproject.toml / requirements.txt — dependency hints
 
-3) Key repository conventions and patterns
+5) Files and AI assistant configs to incorporate
+- .github/copilot-instructions.md — (this file) keep up-to-date
+- .cursor/* — this repo previously referenced .cursor rules in docs; if present, incorporate .cursor/mcp.json and .cursor/rules/*.mdc into assistant config
+- app/mcp-server/ — the FastMCP examples should be referenced by Copilot for tool patterns
 
-- "uv" workflow: project uses the "uv" helper (see start.sh and .cursor rules). Typical workflow: install/upgrade uv, create venv with uv venv, add requirements via uv add -r requirements.txt, then use uv run <script>. The .cursor python rules explicitly reference this flow.
+Optional notes for maintainers (short)
+- Consider adding a minimal pytest test and a linter (ruff) to provide quick CI feedback.
+- Add a short Docker run example in start.sh for Windows users (PowerShell variant).
 
-- Model-loading and placement:
-  - Models are expected in app/model_snapshot. Environment variable MODEL_PATH can override (main.py reads MODEL_PATH, default 'app/model_snapshot').
-  - main.py uses local_files_only=True to avoid remote downloads during load; keep model files present locally when running.
-
-- Device handling and generation:
-  - main.py detects CUDA and uses torch.float16 when on GPU. Generation is performed through a Transformers pipeline (task='text-generation'). If adding other inference backends, follow existing pattern (device detection, dtype selection).
-
-- Python typing style (enforced by .cursor rules):
-  - Prefer `X | None` over `Optional[X]`.
-  - Avoid `Any` unless strictly necessary.
-  - Ensure functions include full parameter and return type annotations.
-
-- MCP & .cursor integration:
-  - .cursor/mcp.json contains MCP server entries (playwright, exchange, etc.). Copilot sessions should respect these entries: the "exchange" MCP can be started via the command in that file (it points to a uv executable invocation that runs app/mcp-server/mcp_server.py).
-  - .cursor/rules/general.mdc requests that assistant replies begin by naming the model used, act as a senior DevOps engineer (concise), and always ask for approval before making changes. Respect these when automating tasks or making edits.
-
-4) Where to look next / useful files
-
-- app/main.py — primary web/API entrypoint and inference logic.
-- app/mcp-server/mcp_server.py — example MCP tool and prompt definitions.
-- app/model_snapshot/README.md — model metadata and usage examples for the bundled Granite model.
-- start.sh — canonical sequence for setting up the environment (shows uv commands and Docker notes).
-- .cursor/rules/*.mdc and .cursor/mcp.json — existing AI assistant rules and MCP server configs; follow them to preserve expected assistant behavior.
-
-Questions about MCP servers
-
-- This repo already defines MCP servers in .cursor/mcp.json (playwright, exchange, context7). If you want, configure an MCP server for local Playwright testing or a remote MCP endpoint — say whether to add a Playwright MCP server setup for end-to-end web checks.
-
-Summary
-
-- Created repository-specific Copilot instructions at .github/copilot-instructions.md covering: exact setup/run commands, architecture overview, and repo-specific conventions (uv workflow, typing rules, MCP setup, model placement).
-
-If any area needs more detail (examples for adding tests, recommended linters, or explicit Docker run examples), say which and adjustments will be made.
+End of proposed file.
