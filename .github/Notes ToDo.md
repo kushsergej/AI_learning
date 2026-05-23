@@ -11,3 +11,5 @@ copilot
 /restart
 /model
 /init
+/context
+/fleet
