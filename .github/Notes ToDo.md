@@ -7,9 +7,21 @@ Custom Agents: specific roles or technical domains
 
 
 copilot
+
 /update
 /restart
+
 /model
+
 /init
 /context
+
 /fleet
+
+/mcp
+/ask {prompt you wanna do}
+/plan {prompt you wanna do}
+
+/create-prompt          }
+/create-instructions    } using link https://awesome-copilot.github.com/
+/create-...             }
