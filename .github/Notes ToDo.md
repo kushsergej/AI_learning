@@ -18,10 +18,15 @@ copilot
 
 /fleet
 
-/mcp
 /ask {prompt you wanna do}
 /plan {prompt you wanna do}
+/research {prompt you wanna do}
 
 /create-prompt          }
 /create-instructions    } using link https://awesome-copilot.github.com/
 /create-...             }
+
+/mcp ...
+/plugins ...
+/skills ...
+/agent ...
