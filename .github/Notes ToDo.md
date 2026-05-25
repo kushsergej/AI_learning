@@ -17,6 +17,8 @@ copilot
 /context
 
 /fleet
+/keep-alive
+/tasks
 
 /ask {prompt you wanna do}
 /plan {prompt you wanna do}
